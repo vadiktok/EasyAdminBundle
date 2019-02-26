@@ -1,8 +1,8 @@
-{% macro render_menu_item(item, translation_domain) %}
+{% macro render_menu_item(item, itemIndex, subitemIndex, translation_domain) %}
     {% if item.type == 'divider' %}
         {{ item.label|trans(domain = translation_domain) }}
     {% else %}
-        {% set menu_params = { menuIndex: item.menu_index, submenuIndex: item.submenu_index } %}
+        {% set menu_params = { menuIndex: itemIndex, submenuIndex: subitemIndex } %}
         {% set path =
             item.type == 'link' ? item.url :
             item.type == 'route' ? path(item.route, item.params) :
@@ -38,19 +38,25 @@
     {% set _menu_items = easyadmin_config('design.menu') %}
 
     {% block main_menu %}
-        {% for item in _menu_items %}
+        {# loop.index can't be used to track menu item position because items are optionally hidden depending on user's permissions #}
+        {% set _item_number = -1 %}
+        {% for item in _menu_items if is_granted(item.permission|default('ROLE_USER')) %}
+            {% set _item_number = _item_number + 1 %}
             {% block menu_item %}
-                {% set is_selected_menu = app.request.query.get('menuIndex')|default(-1) == loop.index0 %}
+                {% set is_selected_menu = app.request.query.get('menuIndex')|default(-1) == _item_number %}
                 {% set is_selected_submenu = is_selected_menu and app.request.query.get('submenuIndex')|default(-1) != -1 %}
                 <li class="{{ item.type == 'divider' ? 'header' }} {{ item.children is not empty ? 'treeview' }} {{ is_selected_menu ? 'active' }} {{ is_selected_submenu ? 'submenu-active' }}">
-                    {{ helper.render_menu_item(item, _translation_domain) }}
+                    {{ helper.render_menu_item(item, _item_number, -1, _translation_domain) }}
 
                     {% if item.children|default([]) is not empty %}
                         <ul class="treeview-menu">
-                            {% for subitem in item.children %}
+                            {# loop.index can't be used to track menu subitem position because subitems are optionally hidden depending on user's permissions #}
+                            {% set _subitem_number = -1 %}
+                            {% for subitem in item.children if is_granted(subitem.permission|default('ROLE_USER')) %}
+                                {% set _subitem_number = _subitem_number + 1 %}
                                 {% block menu_subitem %}
-                                    <li class="{{ subitem.type == 'divider' ? 'header' }} {{ is_selected_menu and app.request.query.get('submenuIndex')|default(-1) == loop.index0 ? 'active' }}">
-                                        {{ helper.render_menu_item(subitem, _translation_domain) }}
+                                    <li class="{{ subitem.type == 'divider' ? 'header' }} {{ is_selected_menu and app.request.query.get('submenuIndex')|default(-1) == _subitem_number ? 'active' }}">
+                                        {{ helper.render_menu_item(subitem, _item_number, _subitem_number, _translation_domain) }}
                                     </li>
                                 {% endblock menu_subitem %}
                             {% endfor %}
