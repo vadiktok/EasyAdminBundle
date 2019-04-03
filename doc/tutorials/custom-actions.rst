@@ -53,10 +53,10 @@ Now you can define the ``restockAction()`` method in your own controller:
     // src/Controller/AdminController.php
     namespace App\Controller;
 
-    use EasyCorp\Bundle\EasyAdminBundle\Controller\AdminController as BaseAdminController;
+    use EasyCorp\Bundle\EasyAdminBundle\Controller\EasyAdminController;
     // ...
 
-    class AdminController extends BaseAdminController
+    class AdminController extends EasyAdminController
     {
         // ...
 
@@ -179,14 +179,14 @@ would look as follows:
             // redirect to the 'list' view of the given entity ...
             return $this->redirectToRoute('easyadmin', array(
                 'action' => 'list',
-                'entity' => $this->request->query->get('entity'),
+                'entity' => $request->query->get('entity'),
             ));
 
             // ... or redirect to the 'edit' view of the given entity item
             return $this->redirectToRoute('easyadmin', array(
                 'action' => 'edit',
                 'id' => $id,
-                'entity' => $this->request->query->get('entity'),
+                'entity' => $request->query->get('entity'),
             ));
         }
     }
